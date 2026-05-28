@@ -110,23 +110,21 @@ app.MapPost("/api/usuarios", async (Usuario user, AppDbContext db) => {
 });
 
 // Registrar una nueva venta
+
 app.MapPost("/api/ventas", async (Venta venta, AppDbContext db) => {
     try
     {
         venta.Fecha = DateTime.SpecifyKind(venta.Fecha, DateTimeKind.Utc);
-        if (venta.Id == Guid.Empty)
-        {
-        }
+        if (venta.ClienteId == "mostrador") venta.ClienteId = null;
 
         db.Ventas.Add(venta);
         await db.SaveChangesAsync();
-
         return Results.Created($"/api/ventas/{venta.Id}", venta);
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Error al guardar venta: {ex.Message}");
-        return Results.Problem("No se pudo guardar la venta: " + ex.Message);
+        Console.WriteLine("ERROR VENTA: " + ex.Message);
+        return Results.Problem(ex.Message);
     }
 });
 //Registrar lotes independientes

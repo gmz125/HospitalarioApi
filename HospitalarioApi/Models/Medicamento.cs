@@ -25,6 +25,9 @@ namespace HospitalarioApi.Models
 
         [Column("nombre_negocio")]
         public string? NombreNegocio { get; set; }
+        [Column("subcategoria")] public string? Subcategoria { get; set; }
+        [Column("url_imagen")] public string? UrlImagen { get; set; }
+        [Column("telefono_contacto")] public string? Telefono { get; set; }
         [NotMapped]
         public List<Lote> Lotes { get; set; } = new();
     }
