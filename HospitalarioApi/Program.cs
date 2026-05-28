@@ -58,16 +58,28 @@ app.MapGet("/api/ventas", async (AppDbContext db) => {
 });
 // Obtener todos los medicamentos 
 app.MapGet("/api/medicamentos", async (AppDbContext db) => {
-    var lista = await db.Medicamentos.ToListAsync();
-    foreach (var med in lista)
+    try
     {
-        med.Lotes = await db.Lotes
-            .Where(l => l.MedicamentoId == med.Id)
-            .ToListAsync();
-    }
+        var lista = await db.Medicamentos.ToListAsync();
+        var todosLosLotes = await db.Lotes.ToListAsync();
+        foreach (var med in lista)
+        {
+            med.Lotes = todosLosLotes
+                .Where(l => l.MedicamentoId == med.Id)
+                .ToList();
+        }
 
-    return Results.Ok(lista);
+        return Results.Ok(lista);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"ERROR CRÍTICO EN GET MEDICAMENTOS: {ex.Message}");
+        if (ex.InnerException != null) Console.WriteLine($"INNER ERROR: {ex.InnerException.Message}");
+
+        return Results.Problem("Error interno: " + ex.Message);
+    }
 });
+
 
 // Este lo puedes mantener por si necesitas consultar lotes por separado
 app.MapGet("/api/medicamentos/{id}/lotes", async (Guid id, AppDbContext db) =>
