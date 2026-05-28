@@ -1,5 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using HospitalarioApi.Models;
+﻿using HospitalarioApi.Models;
+using HospitalarioApi.Models.HospitalarioApi.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace HospitalarioApi
 {
