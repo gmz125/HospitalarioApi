@@ -1,6 +1,7 @@
 using HospitalarioApi;
 using HospitalarioApi.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -71,11 +72,30 @@ app.MapGet("/api/medicamentos/{id}/lotes", async (Guid id, AppDbContext db) =>
 
 // ENDPOINTS DE GUARDADO (POST)
 
-// Registrar un nuevo medicamento
+// Registrar un nuevo medicamento CON sus lotes
 app.MapPost("/api/medicamentos", async (Medicamento med, AppDbContext db) => {
-    db.Medicamentos.Add(med);
-    await db.SaveChangesAsync();
-    return Results.Created($"/api/medicamentos/{med.Id}", med);
+    try
+    {
+        db.Medicamentos.Add(med);
+        await db.SaveChangesAsync();
+        if (med.Lotes != null && med.Lotes.Any())
+        {
+            foreach (var lote in med.Lotes)
+            {
+                lote.MedicamentoId = med.Id;
+                lote.FechaCaducidad = DateTime.SpecifyKind(lote.FechaCaducidad, DateTimeKind.Utc);
+                db.Lotes.Add(lote);
+            }
+            await db.SaveChangesAsync();
+        }
+
+        return Results.Created($"/api/medicamentos/{med.Id}", med);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error al crear medicamento y lotes: {ex.Message}");
+        return Results.Problem("Error al guardar: " + ex.Message);
+    }
 });
 
 // Registrar un usuario (Sincronización desde Flutter)
@@ -91,16 +111,37 @@ app.MapPost("/api/usuarios", async (Usuario user, AppDbContext db) => {
 
 // Registrar una nueva venta
 app.MapPost("/api/ventas", async (Venta venta, AppDbContext db) => {
-    db.Ventas.Add(venta);
-    await db.SaveChangesAsync();
-    return Results.Created($"/api/ventas/{venta.Id}", venta);
-});
+    try
+    {
+        venta.Fecha = DateTime.SpecifyKind(venta.Fecha, DateTimeKind.Utc);
+        if (venta.Id == Guid.Empty)
+        {
+        }
 
-// Registrar un nuevo lote
+        db.Ventas.Add(venta);
+        await db.SaveChangesAsync();
+
+        return Results.Created($"/api/ventas/{venta.Id}", venta);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error al guardar venta: {ex.Message}");
+        return Results.Problem("No se pudo guardar la venta: " + ex.Message);
+    }
+});
+//Registrar lotes independientes
 app.MapPost("/api/lotes", async (Lote lote, AppDbContext db) => {
-    db.Lotes.Add(lote);
-    await db.SaveChangesAsync();
-    return Results.Created($"/api/lotes/{lote.Id}", lote);
-});
+    try
+    {
+        lote.FechaCaducidad = DateTime.SpecifyKind(lote.FechaCaducidad, DateTimeKind.Utc);
 
+        db.Lotes.Add(lote);
+        await db.SaveChangesAsync();
+        return Results.Created($"/api/lotes/{lote.Id}", lote);
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem("Error al guardar lote: " + ex.Message);
+    }
+});
 app.Run();

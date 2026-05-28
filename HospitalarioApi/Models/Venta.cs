@@ -18,6 +18,6 @@ namespace HospitalarioApi.Models
         public string NombreNegocio { get; set; } = string.Empty;
 
         [Column("fecha")]
-        public DateTime Fecha { get; set; } = DateTime.Now;
+        public DateTime Fecha { get; set; } = DateTime.UtcNow;
     }
 }

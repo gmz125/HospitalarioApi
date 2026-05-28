@@ -25,5 +25,7 @@ namespace HospitalarioApi.Models
 
         [Column("nombre_negocio")]
         public string? NombreNegocio { get; set; }
+        [NotMapped]
+        public List<Lote> Lotes { get; set; } = new();
     }
 }
