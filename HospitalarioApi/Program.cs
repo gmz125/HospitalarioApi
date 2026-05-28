@@ -37,12 +37,6 @@ app.MapControllers();
 
 // ENDPOINTS DE CONSULTA (GET)
 
-// Obtener todos los medicamentos
-app.MapGet("/api/medicamentos", async (AppDbContext db) => {
-    var lista = await db.Medicamentos.ToListAsync();
-    return Results.Ok(lista);
-});
-
 // Obtener todos los usuarios (con manejo de errores)
 app.MapGet("/api/usuarios", async (AppDbContext db) =>
 {
@@ -62,8 +56,20 @@ app.MapGet("/api/ventas", async (AppDbContext db) => {
     var lista = await db.Ventas.ToListAsync();
     return Results.Ok(lista);
 });
+// Obtener todos los medicamentos 
+app.MapGet("/api/medicamentos", async (AppDbContext db) => {
+    var lista = await db.Medicamentos.ToListAsync();
+    foreach (var med in lista)
+    {
+        med.Lotes = await db.Lotes
+            .Where(l => l.MedicamentoId == med.Id)
+            .ToListAsync();
+    }
 
-// Obtener los lotes de un medicamento específico
+    return Results.Ok(lista);
+});
+
+// Este lo puedes mantener por si necesitas consultar lotes por separado
 app.MapGet("/api/medicamentos/{id}/lotes", async (Guid id, AppDbContext db) =>
 {
     var lista = await db.Lotes.Where(l => l.MedicamentoId == id).ToListAsync();
