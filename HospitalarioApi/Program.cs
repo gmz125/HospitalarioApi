@@ -72,14 +72,12 @@ app.MapGet("/api/medicamentos/{id}/lotes", async (Guid id, AppDbContext db) =>
 
 // ENDPOINTS DE GUARDADO (POST)
 
-// Registrar un nuevo medicamento CON sus lotes
 app.MapPost("/api/medicamentos", async (Medicamento med, AppDbContext db) => {
     try
     {
         if (med.Id == Guid.Empty) med.Id = Guid.NewGuid();
 
         db.Medicamentos.Add(med);
-        await db.SaveChangesAsync();
 
         if (med.Lotes != null && med.Lotes.Any())
         {
@@ -90,18 +88,20 @@ app.MapPost("/api/medicamentos", async (Medicamento med, AppDbContext db) => {
                 lote.FechaCaducidad = DateTime.SpecifyKind(lote.FechaCaducidad, DateTimeKind.Utc);
                 db.Lotes.Add(lote);
             }
-            await db.SaveChangesAsync();
         }
+
+        db.Database.SetCommandTimeout(60);
+        await db.SaveChangesAsync();
 
         return Results.Created($"/api/medicamentos/{med.Id}", med);
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"ERROR REAL: {ex.InnerException?.Message ?? ex.Message}");
-        return Results.Problem("Error al guardar: " + (ex.InnerException?.Message ?? ex.Message));
+        var errorDetalle = ex.InnerException?.Message ?? ex.Message;
+        Console.WriteLine($"ERROR AL GUARDAR: {errorDetalle}");
+        return Results.Problem("Error en base de datos: " + errorDetalle);
     }
 });
-
 // Registrar un usuario (Sincronización desde Flutter)
 app.MapPost("/api/usuarios", async (Usuario user, AppDbContext db) => {
     // Verificación para no duplicar si el usuario ya existe
