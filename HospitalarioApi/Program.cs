@@ -71,27 +71,23 @@ app.MapGet("/api/medicamentos/{id}/lotes", async (Guid id, AppDbContext db) =>
 });
 
 // ENDPOINTS DE GUARDADO (POST)
-
 app.MapPost("/api/medicamentos", async (Medicamento med, AppDbContext db) => {
     try
     {
         if (med.Id == Guid.Empty) med.Id = Guid.NewGuid();
-
         db.Medicamentos.Add(med);
-
+        await db.SaveChangesAsync(); 
         if (med.Lotes != null && med.Lotes.Any())
         {
             foreach (var lote in med.Lotes)
             {
                 lote.Id = Guid.NewGuid();
-                lote.MedicamentoId = med.Id;
+                lote.MedicamentoId = med.Id; 
                 lote.FechaCaducidad = DateTime.SpecifyKind(lote.FechaCaducidad, DateTimeKind.Utc);
                 db.Lotes.Add(lote);
             }
+            await db.SaveChangesAsync();
         }
-
-        db.Database.SetCommandTimeout(60);
-        await db.SaveChangesAsync();
 
         return Results.Created($"/api/medicamentos/{med.Id}", med);
     }
@@ -102,6 +98,7 @@ app.MapPost("/api/medicamentos", async (Medicamento med, AppDbContext db) => {
         return Results.Problem("Error en base de datos: " + errorDetalle);
     }
 });
+
 // Registrar un usuario (Sincronización desde Flutter)
 app.MapPost("/api/usuarios", async (Usuario user, AppDbContext db) => {
     // Verificación para no duplicar si el usuario ya existe
