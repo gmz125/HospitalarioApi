@@ -73,6 +73,7 @@ app.MapGet("/api/medicamentos", async (AppDbContext db) => {
     }
     catch (Exception ex)
     {
+        // Esto imprimirá el error real en los logs de Render
         Console.WriteLine($"ERROR CRÍTICO EN GET MEDICAMENTOS: {ex.Message}");
         if (ex.InnerException != null) Console.WriteLine($"INNER ERROR: {ex.InnerException.Message}");
 
