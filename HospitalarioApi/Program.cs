@@ -76,12 +76,16 @@ app.MapGet("/api/medicamentos/{id}/lotes", async (Guid id, AppDbContext db) =>
 app.MapPost("/api/medicamentos", async (Medicamento med, AppDbContext db) => {
     try
     {
+        if (med.Id == Guid.Empty) med.Id = Guid.NewGuid();
+
         db.Medicamentos.Add(med);
         await db.SaveChangesAsync();
+
         if (med.Lotes != null && med.Lotes.Any())
         {
             foreach (var lote in med.Lotes)
             {
+                lote.Id = Guid.NewGuid();
                 lote.MedicamentoId = med.Id;
                 lote.FechaCaducidad = DateTime.SpecifyKind(lote.FechaCaducidad, DateTimeKind.Utc);
                 db.Lotes.Add(lote);
@@ -93,8 +97,8 @@ app.MapPost("/api/medicamentos", async (Medicamento med, AppDbContext db) => {
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Error al crear medicamento y lotes: {ex.Message}");
-        return Results.Problem("Error al guardar: " + ex.Message);
+        Console.WriteLine($"ERROR REAL: {ex.InnerException?.Message ?? ex.Message}");
+        return Results.Problem("Error al guardar: " + (ex.InnerException?.Message ?? ex.Message));
     }
 });
 
