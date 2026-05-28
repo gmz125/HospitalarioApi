@@ -75,27 +75,29 @@ app.MapPost("/api/medicamentos", async (Medicamento med, AppDbContext db) => {
     try
     {
         if (med.Id == Guid.Empty) med.Id = Guid.NewGuid();
+
+        db.Database.SetCommandTimeout(30);
+
         db.Medicamentos.Add(med);
         await db.SaveChangesAsync(); 
+
         if (med.Lotes != null && med.Lotes.Any())
         {
             foreach (var lote in med.Lotes)
             {
                 lote.Id = Guid.NewGuid();
-                lote.MedicamentoId = med.Id; 
+                lote.MedicamentoId = med.Id;
                 lote.FechaCaducidad = DateTime.SpecifyKind(lote.FechaCaducidad, DateTimeKind.Utc);
                 db.Lotes.Add(lote);
             }
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(); 
         }
-
         return Results.Created($"/api/medicamentos/{med.Id}", med);
     }
     catch (Exception ex)
     {
-        var errorDetalle = ex.InnerException?.Message ?? ex.Message;
-        Console.WriteLine($"ERROR AL GUARDAR: {errorDetalle}");
-        return Results.Problem("Error en base de datos: " + errorDetalle);
+        Console.WriteLine($"ERROR: {ex.InnerException?.Message ?? ex.Message}");
+        return Results.Problem("Error: " + (ex.InnerException?.Message ?? ex.Message));
     }
 });
 
