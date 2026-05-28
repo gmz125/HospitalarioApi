@@ -26,5 +26,7 @@ RUN dotnet publish "./HospitalarioApi.csproj" -c $BUILD_CONFIGURATION -o /app/pu
 # Esta fase se usa en producción o cuando se ejecuta desde VS en modo normal (valor predeterminado cuando no se usa la configuración de depuración)
 FROM base AS final
 WORKDIR /app
+# Agregamos esta línea para instalar la librería faltante
+RUN apt-get update && apt-get install -y libgssapi-krb5-2
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "HospitalarioApi.dll"]
