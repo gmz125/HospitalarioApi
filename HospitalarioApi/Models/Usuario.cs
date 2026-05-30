@@ -16,7 +16,7 @@ namespace HospitalarioApi.Models
 
         [Column("primer_apellido")]
         [JsonPropertyName("primer_apellido")]
-        public string PrimerApellido { get; set; } = string.Empty;
+        public string? PrimerApellido { get; set; }
 
         [Column("segundo_apellido")]
         [JsonPropertyName("segundo_apellido")]

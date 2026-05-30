@@ -10,7 +10,7 @@ namespace HospitalarioApi.Models
         [Key]
         [Column("id")]
         [JsonPropertyName("id")]
-        public Guid Id { get; set; }
+        public string Id { get; set; } = string.Empty;
 
         [Column("usuario_id")]
         [JsonPropertyName("usuario_id")]

@@ -8,18 +8,18 @@ namespace HospitalarioApi.Models
     {
         [Column("id")]
         [JsonPropertyName("id")]
-        public Guid Id { get; set; }
+        public string Id { get; set; } = string.Empty;
 
         [Column("medicamento_id")]
         [JsonPropertyName("medicamento_id")]
-        public Guid MedicamentoId { get; set; }
+        public string MedicamentoId { get; set; } = string.Empty;
 
         [Column("codigo")]
         [JsonPropertyName("codigo")]
         public string Codigo { get; set; } = "S/N";
 
         [Column("fecha_caducidad")]
-        [JsonPropertyName("fechaCaducidad")] 
+        [JsonPropertyName("fechaCaducidad")]
         public DateTime FechaCaducidad { get; set; }
 
         [Column("cantidad")]

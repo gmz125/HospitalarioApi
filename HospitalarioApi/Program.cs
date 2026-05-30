@@ -1,15 +1,12 @@
+using Microsoft.EntityFrameworkCore;
 using HospitalarioApi;
 using HospitalarioApi.Models;
-using Microsoft.EntityFrameworkCore;
 using System.Linq;
 
 var builder = WebApplication.CreateBuilder(args);
-
-//Configuración de la base de datos
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddNpgsql<AppDbContext>(connectionString);
 
-//Configuración de CORS
 builder.Services.AddCors(options => {
     options.AddDefaultPolicy(policy => {
         policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
@@ -20,122 +17,47 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
-
 app.UseCors();
-
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-// Comentado para evitar lentitud en Render
-// app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 
-// ENDPOINTS DE CONSULTA (GET) - Optimizados
+// ENDPOINTS DE CONSULTA (GET)
 
+// Obtener Usuarios
 app.MapGet("/api/usuarios", async (AppDbContext db) =>
-{
-    try
-    {
-        var lista = await db.Usuarios.AsNoTracking().ToListAsync();
-        return Results.Ok(lista);
-    }
-    catch (Exception ex)
-    {
-        return Results.Problem("Error base de datos: " + ex.Message);
-    }
-});
+    Results.Ok(await db.Usuarios.AsNoTracking().ToListAsync()));
 
-app.MapGet("/api/ventas", async (AppDbContext db) => {
-    try
-    {
-        var lista = await db.Ventas.AsNoTracking().ToListAsync();
-        return Results.Ok(lista);
-    }
-    catch (Exception ex) { return Results.Problem(ex.Message); }
-});
+// Obtener Ventas
+app.MapGet("/api/ventas", async (AppDbContext db) =>
+    Results.Ok(await db.Ventas.AsNoTracking().ToListAsync()));
 
+// Obtener Medicamentos con Lotes 
 app.MapGet("/api/medicamentos", async (AppDbContext db) => {
     try
     {
-        // Traemos los medicamentos y sus lotes en una sola pasada ultra rápida
-        var lista = await db.Medicamentos
-            .AsNoTracking()
-            .Select(m => new {
-                m.Id,
-                m.Nombre,
-                m.Descripcion,
-                m.Precio,
-                m.RequiereReceta,
-                m.Categoria,
-                m.Subcategoria,
-                m.UrlImagen,
-                m.NombreNegocio,
-                m.UsuarioId,
-                m.Telefono,
-                Lotes = db.Lotes.Where(l => l.MedicamentoId == m.Id).ToList()
-            })
-            .ToListAsync();
+        var listaMed = await db.Medicamentos.AsNoTracking().ToListAsync();
+        var listaLotes = await db.Lotes.AsNoTracking().ToListAsync();
 
-        return Results.Ok(lista);
+        foreach (var med in listaMed)
+        {
+            med.Lotes = listaLotes.Where(l => l.MedicamentoId == med.Id).ToList();
+        }
+        return Results.Ok(listaMed);
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"FALLO GET: {ex.Message}");
-        return Results.Problem("El servidor de base de datos está despertando. Por favor, refresca en 10 segundos.");
-    }
-});
-
-app.MapGet("/api/medicamentos/{id}/lotes", async (Guid id, AppDbContext db) =>
-{
-    var lista = await db.Lotes.AsNoTracking().Where(l => l.MedicamentoId == id).ToListAsync();
-    return Results.Ok(lista);
-});
-
-app.MapGet("/api/lotes", async (AppDbContext db) =>
-{
-    try
-    {
-        var lista = await db.Lotes.AsNoTracking().ToListAsync();
-        return Results.Ok(lista);
-    }
-    catch (Exception ex)
-    {
-        return Results.Problem("Error al consultar lotes: " + ex.Message);
+        return Results.Problem(ex.Message);
     }
 });
 
 // ENDPOINTS DE GUARDADO (POST)
 
-app.MapPost("/api/medicamentos", async (Medicamento med, AppDbContext db) => {
-    try
-    {
-        if (med.Id == Guid.Empty) med.Id = Guid.NewGuid();
-
-        db.Medicamentos.Add(med);
-        await db.SaveChangesAsync();
-
-        if (med.Lotes != null && med.Lotes.Any())
-        {
-            foreach (var lote in med.Lotes)
-            {
-                if (lote.Id == Guid.Empty) lote.Id = Guid.NewGuid();
-                lote.MedicamentoId = med.Id;
-                lote.FechaCaducidad = DateTime.SpecifyKind(lote.FechaCaducidad, DateTimeKind.Utc);
-                db.Lotes.Add(lote);
-            }
-            await db.SaveChangesAsync();
-        }
-        return Results.Created($"/api/medicamentos/{med.Id}", med);
-    }
-    catch (Exception ex)
-    {
-        return Results.Problem("Error: " + (ex.InnerException?.Message ?? ex.Message));
-    }
-});
-
+// Guardar Usuario (Sincronización)
 app.MapPost("/api/usuarios", async (Usuario user, AppDbContext db) => {
     try
     {
@@ -149,44 +71,50 @@ app.MapPost("/api/usuarios", async (Usuario user, AppDbContext db) => {
     catch (Exception ex) { return Results.Problem(ex.Message); }
 });
 
+// Guardar Medicamento con sus Lotes
+app.MapPost("/api/medicamentos", async (Medicamento med, AppDbContext db) => {
+    try
+    {
+        if (string.IsNullOrEmpty(med.Id)) med.Id = Guid.NewGuid().ToString();
+
+        db.Medicamentos.Add(med);
+        await db.SaveChangesAsync();
+
+        if (med.Lotes != null && med.Lotes.Count > 0)
+        {
+            foreach (var lote in med.Lotes)
+            {
+                if (string.IsNullOrEmpty(lote.Id)) lote.Id = Guid.NewGuid().ToString();
+                lote.MedicamentoId = med.Id;
+                lote.FechaCaducidad = DateTime.SpecifyKind(lote.FechaCaducidad, DateTimeKind.Utc);
+                db.Lotes.Add(lote);
+            }
+            await db.SaveChangesAsync();
+        }
+        return Results.Created($"/api/medicamentos/{med.Id}", med);
+    }
+    catch (Exception ex) { return Results.Problem(ex.Message); }
+});
+
+// Guardar Venta
 app.MapPost("/api/ventas", async (Venta venta, AppDbContext db) => {
     try
     {
-        if (venta.Id == Guid.Empty) venta.Id = Guid.NewGuid();
+        if (string.IsNullOrEmpty(venta.Id)) venta.Id = Guid.NewGuid().ToString();
         venta.Fecha = DateTime.SpecifyKind(venta.Fecha, DateTimeKind.Utc);
-        if (string.IsNullOrEmpty(venta.ClienteId) || venta.ClienteId == "mostrador")
+        if (venta.ClienteId == "mostrador" || string.IsNullOrEmpty(venta.ClienteId))
         {
             venta.ClienteId = null;
         }
         else
         {
-            var existeCliente = await db.Usuarios.AnyAsync(u => u.Id == venta.ClienteId);
-            if (!existeCliente)
-            {
-                venta.ClienteId = null;
-            }
+            var existe = await db.Usuarios.AnyAsync(u => u.Id == venta.ClienteId);
+            if (!existe) venta.ClienteId = null;
         }
 
         db.Ventas.Add(venta);
         await db.SaveChangesAsync();
-
         return Results.Created($"/api/ventas/{venta.Id}", venta);
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"ERROR CRÍTICO VENTA: {ex.Message}");
-        return Results.Problem("No se pudo registrar la venta: " + ex.Message);
-    }
-});
-
-app.MapPost("/api/lotes", async (Lote lote, AppDbContext db) => {
-    try
-    {
-        if (lote.Id == Guid.Empty) lote.Id = Guid.NewGuid();
-        lote.FechaCaducidad = DateTime.SpecifyKind(lote.FechaCaducidad, DateTimeKind.Utc);
-        db.Lotes.Add(lote);
-        await db.SaveChangesAsync();
-        return Results.Created($"/api/lotes/{lote.Id}", lote);
     }
     catch (Exception ex) { return Results.Problem(ex.Message); }
 });

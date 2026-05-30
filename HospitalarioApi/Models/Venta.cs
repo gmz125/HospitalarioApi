@@ -8,15 +8,15 @@ namespace HospitalarioApi.Models
     {
         [Column("id")]
         [JsonPropertyName("id")]
-        public Guid Id { get; set; }
+        public string Id { get; set; } = string.Empty;
 
         [Column("cliente_id")]
         [JsonPropertyName("cliente_id")]
-        public string? ClienteId { get; set; } 
+        public string? ClienteId { get; set; }
 
         [Column("medicamento_id")]
         [JsonPropertyName("medicamento_id")]
-        public Guid? MedicamentoId { get; set; }
+        public string? MedicamentoId { get; set; }
 
         [Column("nombre_medicamento")]
         [JsonPropertyName("nombre_medicamento")]
