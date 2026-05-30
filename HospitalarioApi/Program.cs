@@ -60,21 +60,31 @@ app.MapGet("/api/ventas", async (AppDbContext db) => {
 app.MapGet("/api/medicamentos", async (AppDbContext db) => {
     try
     {
-        var lista = await db.Medicamentos.AsNoTracking().ToListAsync();
-        var todosLosLotes = await db.Lotes.AsNoTracking().ToListAsync();
+        // Usamos una sola consulta para traer todo rápido
+        var lista = await db.Medicamentos
+            .AsNoTracking()
+            .Select(m => new {
+                m.Id,
+                m.Nombre,
+                m.Descripcion,
+                m.Precio,
+                m.RequiereReceta,
+                m.Categoria,
+                m.Subcategoria,
+                m.UrlImagen,
+                m.NombreNegocio,
+                m.UsuarioId,
+                m.Telefono,
+                Lotes = db.Lotes.Where(l => l.MedicamentoId == m.Id).ToList()
+            })
+            .ToListAsync();
 
-        foreach (var med in lista)
-        {
-            med.Lotes = todosLosLotes
-                .Where(l => l.MedicamentoId == med.Id)
-                .ToList();
-        }
         return Results.Ok(lista);
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"ERROR GET MEDICAMENTOS: {ex.Message}");
-        return Results.Problem("Error interno: " + ex.Message);
+        Console.WriteLine($"ERROR: {ex.Message}");
+        return Results.Problem("La base de datos tardó en responder. Reintenta en unos segundos.");
     }
 });
 
