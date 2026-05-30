@@ -54,7 +54,20 @@ app.MapGet("/api/medicamentos", async (AppDbContext db) => {
         return Results.Problem(ex.Message);
     }
 });
-
+// Obtener todos los lotes (para consulta directa en el navegador)
+app.MapGet("/api/lotes", async (AppDbContext db) =>
+{
+    try
+    {
+        // .AsNoTracking() hace que la consulta sea más rápida y estable
+        var lista = await db.Lotes.AsNoTracking().ToListAsync();
+        return Results.Ok(lista);
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem("Error al consultar lotes: " + ex.Message);
+    }
+});
 // ENDPOINTS DE GUARDADO (POST)
 
 // Guardar Usuario (Sincronización)
