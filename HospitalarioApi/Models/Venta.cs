@@ -12,7 +12,7 @@ namespace HospitalarioApi.Models
 
         [Column("cliente_id")]
         [JsonPropertyName("cliente_id")]
-        public string? ClienteId { get; set; }
+        public string? ClienteId { get; set; } 
 
         [Column("medicamento_id")]
         [JsonPropertyName("medicamento_id")]
@@ -33,6 +33,10 @@ namespace HospitalarioApi.Models
         [Column("nombre_negocio")]
         [JsonPropertyName("nombre_negocio")]
         public string NombreNegocio { get; set; } = string.Empty;
+
+        [Column("requiere_receta")]
+        [JsonPropertyName("requiere_receta")]
+        public bool RequiereReceta { get; set; }
 
         [Column("fecha")]
         [JsonPropertyName("fecha")]

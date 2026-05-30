@@ -152,14 +152,31 @@ app.MapPost("/api/usuarios", async (Usuario user, AppDbContext db) => {
 app.MapPost("/api/ventas", async (Venta venta, AppDbContext db) => {
     try
     {
+        if (venta.Id == Guid.Empty) venta.Id = Guid.NewGuid();
         venta.Fecha = DateTime.SpecifyKind(venta.Fecha, DateTimeKind.Utc);
-        if (venta.ClienteId == "mostrador" || string.IsNullOrEmpty(venta.ClienteId)) venta.ClienteId = null;
+        if (string.IsNullOrEmpty(venta.ClienteId) || venta.ClienteId == "mostrador")
+        {
+            venta.ClienteId = null;
+        }
+        else
+        {
+            var existeCliente = await db.Usuarios.AnyAsync(u => u.Id == venta.ClienteId);
+            if (!existeCliente)
+            {
+                venta.ClienteId = null;
+            }
+        }
 
         db.Ventas.Add(venta);
         await db.SaveChangesAsync();
+
         return Results.Created($"/api/ventas/{venta.Id}", venta);
     }
-    catch (Exception ex) { return Results.Problem(ex.Message); }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"ERROR CRÍTICO VENTA: {ex.Message}");
+        return Results.Problem("No se pudo registrar la venta: " + ex.Message);
+    }
 });
 
 app.MapPost("/api/lotes", async (Lote lote, AppDbContext db) => {
