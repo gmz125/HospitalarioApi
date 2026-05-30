@@ -94,6 +94,19 @@ app.MapGet("/api/medicamentos/{id}/lotes", async (Guid id, AppDbContext db) =>
     return Results.Ok(lista);
 });
 
+app.MapGet("/api/lotes", async (AppDbContext db) =>
+{
+    try
+    {
+        var lista = await db.Lotes.AsNoTracking().ToListAsync();
+        return Results.Ok(lista);
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem("Error al consultar lotes: " + ex.Message);
+    }
+});
+
 // ENDPOINTS DE GUARDADO (POST)
 
 app.MapPost("/api/medicamentos", async (Medicamento med, AppDbContext db) => {
