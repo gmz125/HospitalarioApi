@@ -60,7 +60,7 @@ app.MapGet("/api/ventas", async (AppDbContext db) => {
 app.MapGet("/api/medicamentos", async (AppDbContext db) => {
     try
     {
-        // Usamos una sola consulta para traer todo rápido
+        // Traemos los medicamentos y sus lotes en una sola pasada ultra rápida
         var lista = await db.Medicamentos
             .AsNoTracking()
             .Select(m => new {
@@ -83,8 +83,8 @@ app.MapGet("/api/medicamentos", async (AppDbContext db) => {
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"ERROR: {ex.Message}");
-        return Results.Problem("La base de datos tardó en responder. Reintenta en unos segundos.");
+        Console.WriteLine($"FALLO GET: {ex.Message}");
+        return Results.Problem("El servidor de base de datos está despertando. Por favor, refresca en 10 segundos.");
     }
 });
 
