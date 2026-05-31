@@ -132,10 +132,11 @@ app.MapPost("/api/ventas", async (Venta venta, AppDbContext db) => {
     catch (Exception ex) { return Results.Problem(ex.Message); }
 });
 
-// EDITAR un medicamento
+// EDITAR medicamento y sus lotes asociados
 app.MapPut("/api/medicamentos/{id}", async (string id, Medicamento med, AppDbContext db) => {
     var existente = await db.Medicamentos.FindAsync(id);
     if (existente == null) return Results.NotFound();
+
     existente.Nombre = med.Nombre;
     existente.Descripcion = med.Descripcion;
     existente.Precio = med.Precio;
@@ -144,6 +145,20 @@ app.MapPut("/api/medicamentos/{id}", async (string id, Medicamento med, AppDbCon
     existente.RequiereReceta = med.RequiereReceta;
     existente.UrlImagen = med.UrlImagen;
     existente.Telefono = med.Telefono;
+
+    if (med.Lotes != null)
+    {
+        var lotesViejos = db.Lotes.Where(l => l.MedicamentoId == id);
+        db.Lotes.RemoveRange(lotesViejos);
+
+        foreach (var lote in med.Lotes)
+        {
+            if (string.IsNullOrEmpty(lote.Id)) lote.Id = Guid.NewGuid().ToString();
+            lote.MedicamentoId = id;
+            lote.FechaCaducidad = DateTime.SpecifyKind(lote.FechaCaducidad, DateTimeKind.Utc);
+            db.Lotes.Add(lote);
+        }
+    }
 
     await db.SaveChangesAsync();
     return Results.NoContent();
