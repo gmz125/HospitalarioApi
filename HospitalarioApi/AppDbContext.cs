@@ -8,8 +8,7 @@ namespace HospitalarioApi
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }
-
-        // Aquí registramos la tabla de medicamentos
+//registro de tablas
         public DbSet<Medicamento> Medicamentos => Set<Medicamento>();
         public DbSet<Usuario> Usuarios => Set<Usuario>();
         public DbSet<Lote> Lotes => Set<Lote>();
