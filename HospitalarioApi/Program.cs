@@ -139,6 +139,7 @@ app.MapPut("/api/medicamentos/{id}", async (string id, Medicamento med, AppDbCon
 
     existente.Nombre = med.Nombre;
     existente.Descripcion = med.Descripcion;
+    existente.Stock = med.Stock;
     existente.Precio = med.Precio;
     existente.Categoria = med.Categoria;
     existente.Subcategoria = med.Subcategoria;
@@ -146,22 +147,20 @@ app.MapPut("/api/medicamentos/{id}", async (string id, Medicamento med, AppDbCon
     existente.UrlImagen = med.UrlImagen;
     existente.Telefono = med.Telefono;
 
-    if (med.Lotes != null)
-    {
-        var lotesViejos = db.Lotes.Where(l => l.MedicamentoId == id);
-        db.Lotes.RemoveRange(lotesViejos);
-
-        foreach (var lote in med.Lotes)
+        if (med.Lotes != null)
         {
-            if (string.IsNullOrEmpty(lote.Id)) lote.Id = Guid.NewGuid().ToString();
-            lote.MedicamentoId = id;
-            lote.FechaCaducidad = DateTime.SpecifyKind(lote.FechaCaducidad, DateTimeKind.Utc);
-            db.Lotes.Add(lote);
+            var lotesViejos = db.Lotes.Where(l => l.MedicamentoId == id);
+            db.Lotes.RemoveRange(lotesViejos);
+            foreach (var lote in med.Lotes)
+            {
+                if (string.IsNullOrEmpty(lote.Id)) lote.Id = Guid.NewGuid().ToString();
+                lote.MedicamentoId = id;
+                lote.FechaCaducidad = DateTime.SpecifyKind(lote.FechaCaducidad, DateTimeKind.Utc);
+                db.Lotes.Add(lote);
+            }
         }
-    }
-
-    await db.SaveChangesAsync();
-    return Results.NoContent();
+        await db.SaveChangesAsync();
+        return Results.NoContent();
 });
 
 // ELIMINAR un medicamento

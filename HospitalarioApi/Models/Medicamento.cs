@@ -55,5 +55,8 @@ namespace HospitalarioApi.Models
         [NotMapped]
         [JsonPropertyName("lotes")]
         public List<Lote> Lotes { get; set; } = new();
+        [Column("stock")]
+        [JsonPropertyName("stock")]
+        public int Stock { get; set; } 
     }
 }
