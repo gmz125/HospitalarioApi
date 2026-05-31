@@ -132,4 +132,54 @@ app.MapPost("/api/ventas", async (Venta venta, AppDbContext db) => {
     catch (Exception ex) { return Results.Problem(ex.Message); }
 });
 
+// EDITAR un medicamento
+app.MapPut("/api/medicamentos/{id}", async (string id, Medicamento med, AppDbContext db) => {
+    var existente = await db.Medicamentos.FindAsync(id);
+    if (existente == null) return Results.NotFound();
+    existente.Nombre = med.Nombre;
+    existente.Descripcion = med.Descripcion;
+    existente.Precio = med.Precio;
+    existente.Categoria = med.Categoria;
+    existente.Subcategoria = med.Subcategoria;
+    existente.RequiereReceta = med.RequiereReceta;
+    existente.UrlImagen = med.UrlImagen;
+    existente.Telefono = med.Telefono;
+
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+});
+
+// ELIMINAR un medicamento
+app.MapDelete("/api/medicamentos/{id}", async (string id, AppDbContext db) => {
+    var med = await db.Medicamentos.FindAsync(id);
+    if (med == null) return Results.NotFound();
+
+    db.Medicamentos.Remove(med);
+    await db.SaveChangesAsync();
+    return Results.Ok(new { message = "Medicamento eliminado" });
+});
+
+// EDITAR un lote
+app.MapPut("/api/lotes/{id}", async (string id, Lote lote, AppDbContext db) => {
+    var existente = await db.Lotes.FindAsync(id);
+    if (existente == null) return Results.NotFound();
+
+    existente.Cantidad = lote.Cantidad;
+    existente.Codigo = lote.Codigo;
+    existente.FechaCaducidad = DateTime.SpecifyKind(lote.FechaCaducidad, DateTimeKind.Utc);
+
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+});
+
+// ELIMINAR un lote
+app.MapDelete("/api/lotes/{id}", async (string id, AppDbContext db) => {
+    var lote = await db.Lotes.FindAsync(id);
+    if (lote == null) return Results.NotFound();
+
+    db.Lotes.Remove(lote);
+    await db.SaveChangesAsync();
+    return Results.Ok(new { message = "Lote eliminado" });
+});
+
 app.Run();
